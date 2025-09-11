@@ -77,7 +77,6 @@ endif
 
 clean :
 	@echo Removing $(OBJ) directory
-	@$(RM) -rf $(OBJ)
 
 # get bootloader version
 BOOTLOADER_VERSION := $(shell $(FGREP) "define BOOTLOADER_VERSION" $(MAIN_INC_DIR)/version.h | $(CUT) -d" " -f3 )
