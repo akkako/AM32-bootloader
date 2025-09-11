@@ -201,7 +201,7 @@ static char receiveByte;
 static bool messagereceived;
 static int cmd;
 static int received;
-
+static char initialized;
 static uint8_t rxBuffer[258];
 static uint8_t payLoadBuffer[256];
 static uint8_t rxbyte;
@@ -342,7 +342,9 @@ static void setTransmit()
   gpio_mode_set_output(input_pin, GPIO_OUTPUT_PUSH_PULL);
 
   // delay a bit to let the sender get setup for receiving
- // delayMicroseconds(BITTIME);
+  if(initialized){
+  delayMicroseconds(BITTIME);
+  }
 }
 
 static void serialwriteOneChar(uint8_t c)
@@ -373,6 +375,7 @@ static void send_BAD_CRC_ACK()
 static void sendDeviceInfo()
 {
   sendString(devinfo.deviceInfo,sizeof(devinfo.deviceInfo));
+  initialized = 1;
 }
 
 static bool checkAddressWritable(uint32_t address)
