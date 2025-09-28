@@ -44,6 +44,7 @@ extern "C" {
 #include "py32md3xx_ll_tim.h"
 #include "py32md3xx_ll_usart.h"
 #include "py32md3xx_ll_utils.h"
+#include "py32md3xx_ll_flash.h"
 
 /* Private includes
  * ----------------------------------------------------------*/

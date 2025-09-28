@@ -68,7 +68,7 @@ static inline void bl_timer_init(void)
   /* Peripheral clock enable */
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
-  TIM_InitStruct.Prescaler = 63;
+  TIM_InitStruct.Prescaler = 23;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
   TIM_InitStruct.Autoreload = 0xFFFFFFFF;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
@@ -126,6 +126,9 @@ static inline void bl_clock_config(void)
 
   /* Update system clock global variable SystemCoreClock (can also be updated by calling SystemCoreClockUpdate function) */
   LL_SetSystemCoreClock(24000000);
+
+  LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_SYSCFG);
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 }
 
 static inline void bl_gpio_init(void)

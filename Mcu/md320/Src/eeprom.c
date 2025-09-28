@@ -7,73 +7,123 @@
  */
 
 #include "eeprom.h"
-
+#include "main.h"
 #include <string.h>
 
-#define page_size 0x800 // 2 kb for g071
-
-static const uint32_t FLASH_FKEY1 = 0x45670123;
-static const uint32_t FLASH_FKEY2 = 0xCDEF89AB;
-
-bool save_flash_nolib(const uint8_t* data, uint32_t length, uint32_t add)
+/**
+ * @brief  FLASH erase function
+ * @param  None
+ * @retval None
+ */
+static inline void FlashErase(uint32_t addr_start, uint32_t length)
 {
-  if ((add & 0x7) != 0 || (length & 0x7)) {
+  uint32_t flash_program_start = addr_start; /* Start address of user erase page */
+  uint32_t flash_program_end = addr_start + length;
+
+  while (flash_program_start < flash_program_end)
+  {
+    /* Wait Busy=0 */
+    while (LL_FLASH_IsActiveFlag_BUSY(FLASH) == 1)
+      ;
+
+    /* Enable EOP */
+    LL_FLASH_EnableIT_EOP(FLASH);
+
+    /* Enable Page Erase */
+    LL_FLASH_EnablePageErase(FLASH);
+
+    /* Set Erase Address */
+    LL_FLASH_SetEraseAddress(FLASH, flash_program_start);
+
+    /* Wait Busy=0 */
+    while (LL_FLASH_IsActiveFlag_BUSY(FLASH) == 1)
+      ;
+
+    /* Wait EOP=1 */
+    while (LL_FLASH_IsActiveFlag_EOP(FLASH) == 0)
+      ;
+
+    /* Clear EOP */
+    LL_FLASH_ClearFlag_EOP(FLASH);
+
+    /* Disable EOP */
+    LL_FLASH_DisableIT_EOP(FLASH);
+
+    /* Disable Page Erase */
+    LL_FLASH_DisablePageErase(FLASH);
+    flash_program_start += FLASH_PAGE_SIZE;
+  }
+}
+
+static inline void FlashProgram(uint32_t addr, const uint8_t *data, uint32_t len)
+{
+  uint32_t flash_program_start = addr;     /* Start address of user write flash */
+  uint32_t flash_program_end = addr + len; /* End address of user write flash */
+  uint32_t *src = (uint32_t *)data;        /* Pointer to array */
+
+  while (flash_program_start < flash_program_end)
+  {
+    /* Wait Busy=0 */
+    while (LL_FLASH_IsActiveFlag_BUSY(FLASH) == 1)
+      ;
+
+    /* Enable EOP */
+    LL_FLASH_EnableIT_EOP(FLASH);
+
+    /* Enable Program */
+    LL_FLASH_EnablePageProgram(FLASH);
+
+    /* Page Program */
+    LL_FLASH_PageProgram(FLASH, flash_program_start, src);
+
+    /* Wait Busy=0 */
+    while (LL_FLASH_IsActiveFlag_BUSY(FLASH) == 1)
+      ;
+
+    /* Wait EOP=1 */
+    while (LL_FLASH_IsActiveFlag_EOP(FLASH) == 0)
+      ;
+
+    /* Clear EOP */
+    LL_FLASH_ClearFlag_EOP(FLASH);
+
+    /* Disable EOP */
+    LL_FLASH_DisableIT_EOP(FLASH);
+
+    /* Disable Program */
+    LL_FLASH_DisablePageProgram(FLASH);
+    flash_program_start += FLASH_PAGE_SIZE; /* Point to the start address of the next page to be written */
+    src += FLASH_PAGE_SIZE / 4;             /* Point to the next data to be written */
+  }
+}
+
+bool save_flash_nolib(const uint8_t *data, uint32_t length, uint32_t add)
+{
+  if ((add & 0x7) != 0 || (length & 0x7) != 0)
+  {
     // address and length must be on 8 byte boundary
     return false;
   }
-  // we need to flash on 32 bit boundaries
-  const uint32_t data_length = length / 4;
-  volatile FLASH_TypeDef *flash = FLASH;
 
-  // clear errors
-  flash->SR |= FLASH_SR_OPERR | FLASH_SR_PROGERR | FLASH_SR_WRPERR | FLASH_SR_PGAERR |
-               FLASH_SR_SIZERR | FLASH_SR_PGSERR | FLASH_SR_MISERR | FLASH_SR_FASTERR |
-               FLASH_SR_RDERR | FLASH_SR_OPTVERR;
+  /* Unlock FLASH */
+  LL_FLASH_Unlock(FLASH);
 
-  // unlock flash
-  while ((flash->SR & FLASH_SR_BSY1) != 0) ;
+  LL_FLASH_TIMMING_SEQUENCE_CONFIG_24M();
 
-  if ((flash->CR & FLASH_CR_LOCK) != 0) {
-    flash->KEYR = FLASH_FKEY1;
-    flash->KEYR = FLASH_FKEY2;
-  }
+  // erase page
+  FlashErase(add, length);
 
-  // erase page if address is divisable by page size
-  if ((add % page_size) == 0) {
-    flash->CR = FLASH_CR_PER;
-    flash->CR |= (add/page_size) << 3;
-    flash->CR |= FLASH_CR_STRT;
-    while ((flash->SR & FLASH_SR_BSY1) != 0) ;
-  }
+  // program page
+  FlashProgram(add, data, length);
 
-  uint32_t index = 0;
-  volatile uint32_t *fdata = (volatile uint32_t *)add;
-
-  while (index < data_length) {
-    // flash two words at a time
-    uint32_t words[2];
-    memcpy((void*)&words[0], &data[index*4], sizeof(words));
-
-    flash->CR = FLASH_CR_PG;
-
-    fdata[index] = words[0];
-    fdata[index+1] = words[1];
-
-    while ((flash->SR & FLASH_SR_BSY1) != 0) ;
-
-    flash->SR |= FLASH_SR_EOP;
-    flash->CR = 0;
-    index += 2;
-  }
-
-  // lock flash again
-  SET_BIT(flash->CR, FLASH_CR_LOCK);
+  /* Lock FLASH */
+  LL_FLASH_Lock(FLASH);
 
   // ensure data is correct
   return memcmp(data, (const void *)add, length) == 0;
 }
 
-void read_flash_bin(uint8_t* data, uint32_t add, int out_buff_len)
+void read_flash_bin(uint8_t *data, uint32_t add, int out_buff_len)
 {
-  memcpy(data, (void*)add, out_buff_len);
+  memcpy(data, (void *)add, out_buff_len);
 }
