@@ -19,7 +19,7 @@ CFLAGS_$(MCU) := \
 	-I$(HAL_FOLDER_$(MCU))/Inc \
 	-I$(HAL_FOLDER_$(MCU))/Drivers/PY32MD3xx_HAL_Driver/Inc \
 	-I$(HAL_FOLDER_$(MCU))/Drivers/CMSIS/Include \
-	-I$(HAL_FOLDER_$(MCU))/Drivers/CMSIS/Device/ST/PY32MD3xx/Include
+	-I$(HAL_FOLDER_$(MCU))/Drivers/CMSIS/Device/PY32MD3xx/Include
 
 CFLAGS_$(MCU) += \
 	-DPY32MD320x8 \

@@ -8,14 +8,14 @@
   36k ram
  */
 #define RAM_BASE 0x20000000
-#define RAM_SIZE 36*1024
+#define RAM_SIZE 8*1024
 
 /*
   some boards have 128k flash, some have 64k flash. We default to 128 and
   override in the Makefile for the 64K build
  */
 #ifndef BOARD_FLASH_SIZE
-#define BOARD_FLASH_SIZE 128
+#define BOARD_FLASH_SIZE 64
 #endif
 
 #define GPIO_PIN(n) (1U<<(n))

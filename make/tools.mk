@@ -22,7 +22,7 @@ else
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 OSDIR:=macos
-ARM_SDK_PREFIX:=tools/macos/xpack-arm-none-eabi-gcc-10.3.1-2.3/bin/arm-none-eabi-
+ARM_SDK_PREFIX:=arm-none-eabi-
 CP:=cp
 DSEP:=/
 NUL:=/dev/null

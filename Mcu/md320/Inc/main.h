@@ -30,20 +30,20 @@ extern "C" {
 
 /* Includes
  * ------------------------------------------------------------------*/
-#include "stm32g0xx_ll_adc.h"
-#include "stm32g0xx_ll_bus.h"
-#include "stm32g0xx_ll_comp.h"
-#include "stm32g0xx_ll_cortex.h"
-#include "stm32g0xx_ll_dma.h"
-#include "stm32g0xx_ll_exti.h"
-#include "stm32g0xx_ll_gpio.h"
-#include "stm32g0xx_ll_iwdg.h"
-#include "stm32g0xx_ll_pwr.h"
-#include "stm32g0xx_ll_rcc.h"
-#include "stm32g0xx_ll_system.h"
-#include "stm32g0xx_ll_tim.h"
-#include "stm32g0xx_ll_usart.h"
-#include "stm32g0xx_ll_utils.h"
+#include "py32md3xx_ll_adc.h"
+#include "py32md3xx_ll_bus.h"
+#include "py32md3xx_ll_comp.h"
+#include "py32md3xx_ll_cortex.h"
+#include "py32md3xx_ll_dma.h"
+#include "py32md3xx_ll_exti.h"
+#include "py32md3xx_ll_gpio.h"
+#include "py32md3xx_ll_iwdg.h"
+#include "py32md3xx_ll_pwr.h"
+#include "py32md3xx_ll_rcc.h"
+#include "py32md3xx_ll_system.h"
+#include "py32md3xx_ll_tim.h"
+#include "py32md3xx_ll_usart.h"
+#include "py32md3xx_ll_utils.h"
 
 /* Private includes
  * ----------------------------------------------------------*/
