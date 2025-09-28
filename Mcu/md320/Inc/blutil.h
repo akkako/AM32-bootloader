@@ -5,7 +5,7 @@
 #pragma once
 
 /*
-  36k ram
+  8k ram
  */
 #define RAM_BASE 0x20000000
 #define RAM_SIZE 8*1024
@@ -27,7 +27,7 @@
 #define GPIO_OUTPUT_PUSH_PULL LL_GPIO_OUTPUT_PUSHPULL
 
 // assume 8MHz crystal
-uint32_t SystemCoreClock = 8000000U;
+uint32_t SystemCoreClock = 24000000U;
 
 static inline void gpio_mode_set_input(uint32_t pin, uint32_t pull_up_down)
 {
@@ -56,7 +56,7 @@ static inline bool gpio_read(uint32_t pin)
   return LL_GPIO_IsInputPinSet(input_port, pin);
 }
 
-#define BL_TIMER TIM2
+#define BL_TIMER TIM3
 
 /*
   initialise timer for 1us per tick
@@ -66,7 +66,7 @@ static inline void bl_timer_init(void)
   LL_TIM_InitTypeDef TIM_InitStruct = {0};
 
   /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
   TIM_InitStruct.Prescaler = 63;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
@@ -100,34 +100,32 @@ static inline uint16_t bl_timer_us(void)
  */
 static inline void bl_clock_config(void)
 {
-  LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
+  /*  Set FLASH Latency Before modifying the HSI */
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
 
-  /* HSI configuration and activation */
+  /* SET HSI to 24MHz */
+  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz);
+  /* Enable HSI */
   LL_RCC_HSI_Enable();
-  while (LL_RCC_HSI_IsReady() != 1) {
-  }
-
-  /* Main PLL configuration and activation */
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLLM_DIV_1, 8, LL_RCC_PLLR_DIV_2);
-  LL_RCC_PLL_Enable();
-  LL_RCC_PLL_EnableDomain_SYS();
-  while (LL_RCC_PLL_IsReady() != 1) {
+  while (LL_RCC_HSI_IsReady() != 1)
+  {
   }
 
   /* Set AHB prescaler*/
   LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
 
-  /* Sysclk activation on the main PLL */
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
-  while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL) {
+  /* Configure HSISYS as system clock and initialize it */
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSISYS);
+  while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSISYS)
+  {
   }
 
-  /* Set APB1 prescaler*/
+  /* Set APB1 prescaler and initialize it */
   LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
-  LL_Init1msTick(64000000);
-  LL_SetSystemCoreClock(64000000);
-  /* Update CMSIS variable (which can be updated also through SystemCoreClockUpdate function) */
-  LL_SetSystemCoreClock(64000000);
+  LL_Init1msTick(24000000);
+
+  /* Update system clock global variable SystemCoreClock (can also be updated by calling SystemCoreClockUpdate function) */
+  LL_SetSystemCoreClock(24000000);
 }
 
 static inline void bl_gpio_init(void)
